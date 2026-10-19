@@ -1,0 +1,6 @@
+{
+  "name": "audit.az — Maliyyə Auditi və Korporativ İdarəetmə",
+  "description": "Milli və beynəlxalq standartlara (IFRS, ISA) uyğun maliyyə auditi, vergi konsaltinqi, mühasibatlıq və risk idarəetməsi platforması.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

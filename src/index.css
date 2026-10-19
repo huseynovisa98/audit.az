@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --color-brand-bg: #090D14;
+  --color-brand-bg-subtle: #0C131D;
+  --color-brand-panel: #131B26;
+  --color-brand-gold: #D4AF37;
+  --color-brand-gold-bright: #F4D36B;
+  --color-brand-cyan: #00E5FF;
+  --color-brand-green: #36D6A0;
+  --color-brand-text: #F5F7FA;
+  --color-brand-text-muted: #9BAABD;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #090D14;
+    color: #F5F7FA;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Custom refined dark gold scrollbar */
+  ::-webkit-scrollbar {
+    width: 7px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #090D14;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1A2634;
+    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D4AF37;
+  }
+}
+
+.font-editorial {
+  font-family: "Instrument Serif", Georgia, serif;
+  letter-spacing: -0.015em;
+}
+
+/* Subtle architectural grid pattern */
+.bg-grid-subtle {
+  background-size: 48px 48px;
+  background-image: 
+    linear-gradient(to right, rgba(120, 170, 200, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 170, 200, 0.04) 1px, transparent 1px);
+}
+
+.bg-radial-ambient {
+  background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.10) 0%, rgba(0, 229, 255, 0.04) 35%, transparent 70%);
+}
+
+/* Multi-depth glass panels with luxury metallic rim */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(19, 27, 38, 0.85) 0%, rgba(12, 19, 29, 0.8) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(120, 170, 200, 0.16);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-elevated {
+  background: linear-gradient(145deg, rgba(22, 32, 46, 0.92) 0%, rgba(13, 20, 30, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  box-shadow: 0 25px 50px -15px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(244, 211, 107, 0.15);
+}
+
+/* Cinematic Cyan Scanning Line */
+@keyframes scanline-glow {
+  0% {
+    top: -5%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+.animate-scanline-cinematic {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 229, 255, 0.2) 20%, #00E5FF 50%, rgba(0, 229, 255, 0.2) 80%, transparent 100%);
+  box-shadow: 0 0 16px 2px rgba(0, 229, 255, 0.6);
+  animation: scanline-glow 7s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Custom styled Range Input */
+input[type="range"].range-gold {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #131B26;
+  border: 1px solid rgba(120, 170, 200, 0.2);
+  border-radius: 9999px;
+  height: 6px;
+  outline: none;
+}
+
+input[type="range"].range-gold::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #F4D36B 0%, #D4AF37 70%, #997819 100%);
+  border: 2px solid #090D14;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"].range-gold::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 18px rgba(244, 211, 107, 0.8);
+}
