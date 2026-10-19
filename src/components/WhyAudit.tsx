@@ -3,6 +3,8 @@ import { Award, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Language } from '../types';
 import { translations } from '../i18n/translations';
+import { ImageWithFallback } from './ImageWithFallback';
+import boardroomImg from '../assets/images/corporate_boardroom_1792445195541.jpg';
 
 interface WhyAuditProps {
   currentLang: Language;
@@ -52,11 +54,13 @@ export const WhyAudit: React.FC<WhyAuditProps> = ({ currentLang }) => {
             className="lg:col-span-5 relative"
           >
             <div className="relative rounded-2xl overflow-hidden border border-[#D4AF37]/35 shadow-2xl shadow-black/80 group">
-              <img
-                src="/src/assets/images/corporate_boardroom_1792445195541.jpg"
+              <ImageWithFallback
+                src="/images/corporate_boardroom.jpg"
+                fallbackSrc={boardroomImg}
                 alt="audit.az institutional advisory boardroom"
                 className="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
-                referrerPolicy="no-referrer"
+                containerClassName="w-full h-[500px]"
+                fallbackTitle="audit.az Institutional Boardroom"
               />
               {/* Measured contrast scrim */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#090D14] via-[#090D14]/40 to-transparent" />

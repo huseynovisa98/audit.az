@@ -14,6 +14,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Language, ServiceKey } from '../types';
 import { translations } from '../i18n/translations';
+import { ImageWithFallback } from './ImageWithFallback';
+import structureImg from '../assets/images/financial_structure_1792445194427.jpg';
 
 interface ServicesBentoProps {
   currentLang: Language;
@@ -109,11 +111,13 @@ export const ServicesBento: React.FC<ServicesBentoProps> = ({
           >
             {/* Background architectural geometric texture */}
             <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none mix-blend-luminosity overflow-hidden">
-              <img
-                src="/src/assets/images/financial_structure_1792445194427.jpg"
+              <ImageWithFallback
+                src="/images/financial_structure.jpg"
+                fallbackSrc={structureImg}
                 alt="Corporate audit geometry"
                 className="w-full h-full object-cover object-right"
-                referrerPolicy="no-referrer"
+                containerClassName="w-full h-full"
+                fallbackTitle="Corporate Audit Structure"
               />
               <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#090D14]/80 to-[#090D14]" />
             </div>

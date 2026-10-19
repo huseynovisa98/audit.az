@@ -14,6 +14,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Language, ServiceKey } from '../types';
 import { translations } from '../i18n/translations';
+import { ImageWithFallback } from './ImageWithFallback';
+import heroHqImg from '../assets/images/hero_financial_hq_1792445195843.jpg';
 
 interface HeroProps {
   currentLang: Language;
@@ -244,11 +246,14 @@ export const Hero: React.FC<HeroProps> = ({
 
               {/* Background Architectural Poster Fallback (Cloudinary-ready) */}
               <div className="absolute inset-0 z-0 opacity-25 pointer-events-none mix-blend-luminosity">
-                <img
-                  src="/src/assets/images/hero_financial_hq_1792445195843.jpg"
+                <ImageWithFallback
+                  src="/images/hero_financial_hq.jpg"
+                  fallbackSrc={heroHqImg}
                   alt="audit.az architectural headquarters"
                   className="w-full h-full object-cover scale-105"
-                  referrerPolicy="no-referrer"
+                  priority={true}
+                  containerClassName="w-full h-full"
+                  fallbackTitle="audit.az Financial Architecture"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#090D14] via-[#090D14]/90 to-transparent" />
               </div>
@@ -478,11 +483,13 @@ export const Hero: React.FC<HeroProps> = ({
 
               {/* Video Player Display Container */}
               <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-[rgba(120,170,200,0.2)] mb-4 flex items-center justify-center group">
-                <img
-                  src="/src/assets/images/hero_financial_hq_1792445195843.jpg"
+                <ImageWithFallback
+                  src="/images/hero_financial_hq.jpg"
+                  fallbackSrc={heroHqImg}
                   alt="audit.az architectural headquarters"
                   className="w-full h-full object-cover opacity-70"
-                  referrerPolicy="no-referrer"
+                  containerClassName="w-full h-full"
+                  fallbackTitle="audit.az Video Infrastructure"
                 />
                 
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
