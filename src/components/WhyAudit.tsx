@@ -58,8 +58,8 @@ export const WhyAudit: React.FC<WhyAuditProps> = ({ currentLang }) => {
                 src="/images/corporate_boardroom.jpg"
                 fallbackSrc={boardroomImg}
                 alt="audit.az institutional advisory boardroom"
-                className="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
-                containerClassName="w-full h-[500px]"
+                className="w-full h-[320px] sm:h-[420px] lg:h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+                containerClassName="w-full h-[320px] sm:h-[420px] lg:h-[500px]"
                 fallbackTitle="audit.az Institutional Boardroom"
               />
               {/* Measured contrast scrim */}

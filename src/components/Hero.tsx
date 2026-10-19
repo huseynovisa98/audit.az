@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ArrowUpRight, 
   ShieldCheck, 
@@ -9,7 +9,11 @@ import {
   Play, 
   X, 
   Layers, 
-  Sparkles 
+  Sparkles,
+  AlertCircle,
+  Info,
+  Settings2,
+  RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Language, ServiceKey } from '../types';
@@ -24,6 +28,7 @@ interface HeroProps {
   onRequestQuote: () => void;
   onExploreServices: () => void;
   onOpenDiagnostic: () => void;
+  videoUrl?: string;
 }
 
 export const Hero: React.FC<HeroProps> = ({
@@ -33,10 +38,53 @@ export const Hero: React.FC<HeroProps> = ({
   onRequestQuote,
   onExploreServices,
   onOpenDiagnostic,
+  videoUrl,
 }) => {
   const t = translations[currentLang];
   const [activeDataPoint, setActiveDataPoint] = useState<number>(3);
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
+  const [configuredVideoUrl, setConfiguredVideoUrl] = useState<string>(
+    videoUrl || (import.meta.env.VITE_CLOUDINARY_VIDEO_URL as string) || ''
+  );
+  const [tempUrlInput, setTempUrlInput] = useState<string>('');
+  const [showConfigInput, setShowConfigInput] = useState<boolean>(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [videoError, setVideoError] = useState<boolean>(false);
+  const [notConfiguredNotice, setNotConfiguredNotice] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const handleCloseVideoModal = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+    setIsPlaying(false);
+    setVideoError(false);
+    setNotConfiguredNotice(false);
+    setShowVideoModal(false);
+  };
+
+  useEffect(() => {
+    if (!showVideoModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCloseVideoModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showVideoModal]);
+
+  const handlePlayClick = () => {
+    if (!configuredVideoUrl || !configuredVideoUrl.trim()) {
+      setNotConfiguredNotice(true);
+      setIsPlaying(false);
+      return;
+    }
+    setVideoError(false);
+    setNotConfiguredNotice(false);
+    setIsPlaying(true);
+  };
 
   // Dynamic sample data for the interactive SVG chart based on selected service
   const serviceChartData: Record<
@@ -451,6 +499,9 @@ export const Hero: React.FC<HeroProps> = ({
             exit={{ opacity: 0 }}
             role="dialog"
             aria-modal="true"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleCloseVideoModal();
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
           >
             <motion.div 
@@ -461,76 +512,201 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <button
                 type="button"
-                onClick={() => setShowVideoModal(false)}
-                className="absolute top-5 right-5 p-2 rounded-lg bg-[#090D14] border border-[rgba(120,170,200,0.2)] text-[#9BAABD] hover:text-[#F5F7FA]"
+                onClick={handleCloseVideoModal}
+                className="absolute top-5 right-5 p-2 rounded-lg bg-[#090D14] border border-[rgba(120,170,200,0.2)] text-[#9BAABD] hover:text-[#F5F7FA] transition-colors"
                 aria-label="Close video player"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-2 text-xs font-mono text-[#D4AF37] uppercase tracking-wider mb-3">
+              <div className="flex items-center gap-2 text-xs font-mono text-[#D4AF37] uppercase tracking-wider mb-2">
                 <Layers className="w-3.5 h-3.5" />
-                <span>Cloudinary Video Container Architecture</span>
+                <span>{t.hero.videoModal.tag}</span>
               </div>
 
               <h3 className="font-editorial text-2xl sm:text-3xl text-[#F5F7FA] mb-4">
-                {currentLang === 'az'
-                  ? 'audit.az İnstitusional Təqdimat və Video İnfrastrukturu'
-                  : currentLang === 'en'
-                  ? 'audit.az Institutional Video Delivery Interface'
-                  : 'Институциональный видео-плеер audit.az'}
+                {t.hero.videoModal.title}
               </h3>
 
               {/* Video Player Display Container */}
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-[rgba(120,170,200,0.2)] mb-4 flex items-center justify-center group">
-                <ImageWithFallback
-                  src="/images/hero_financial_hq.jpg"
-                  fallbackSrc={heroHqImg}
-                  alt="audit.az architectural headquarters"
-                  className="w-full h-full object-cover opacity-70"
-                  containerClassName="w-full h-full"
-                  fallbackTitle="audit.az Video Infrastructure"
-                />
-                
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-[rgba(120,170,200,0.2)] mb-4 flex items-center justify-center group shadow-2xl">
+                {isPlaying && configuredVideoUrl && !videoError ? (
+                  <video
+                    ref={videoRef}
+                    src={configuredVideoUrl}
+                    poster="/images/hero_financial_hq.jpg"
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-contain bg-black"
+                    onError={() => {
+                      setVideoError(true);
+                      setIsPlaying(false);
+                    }}
+                  >
+                    Your browser does not support HTML5 video streaming.
+                  </video>
+                ) : (
+                  <>
+                    <ImageWithFallback
+                      src="/images/hero_financial_hq.jpg"
+                      fallbackSrc={heroHqImg}
+                      alt="audit.az architectural headquarters"
+                      className="w-full h-full object-cover opacity-75"
+                      containerClassName="w-full h-full absolute inset-0"
+                      fallbackTitle="audit.az Video Infrastructure"
+                    />
+                    
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent pointer-events-none" />
 
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                  <div className="w-16 h-16 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] flex items-center justify-center text-[#F4D36B] mb-3 shadow-lg shadow-[#D4AF37]/20">
-                    <Play className="w-6 h-6 fill-[#F4D36B] ml-1" />
-                  </div>
-                  <div className="text-sm font-semibold text-[#F5F7FA]">
-                    {currentLang === 'az'
-                      ? 'Cloudinary HLS Stream Üçün Hazırdır'
-                      : currentLang === 'en'
-                      ? 'Ready for Cloudinary HLS Adaptive Video Stream'
-                      : 'Готово к подключению Cloudinary HLS потока'}
-                  </div>
-                  <div className="text-xs text-[#9BAABD] max-w-md mt-1">
-                    {currentLang === 'az'
-                      ? 'İlkin mərhələdə yüksək keyfiyyətli statik poster aktivdir. API konfiqurasiyası daxil edildikdə avtomatik video axını başlayacaq.'
-                      : currentLang === 'en'
-                      ? 'High-resolution poster fallback is currently active. Video stream engages automatically when streaming endpoints are supplied.'
-                      : 'В текущей версии активен постер высокого разрешения. Видеопоток активируется при указании конфигурации.'}
-                  </div>
-                </div>
-
-                {/* Simulated media playback controls */}
-                <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-[11px] font-mono text-[#9BAABD] bg-[#090D14]/80 px-3 py-1.5 rounded-lg border border-[rgba(120,170,200,0.15)]">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#00E5FF]" />
-                    <span>1080p · Adaptive Bitrate</span>
-                  </span>
-                  <span>00:00 / 01:45</span>
-                </div>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-10">
+                      {videoError ? (
+                        <div className="max-w-md bg-[#090D14]/90 border border-red-500/40 p-4 rounded-xl flex flex-col items-center shadow-lg">
+                          <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
+                          <div className="text-sm font-semibold text-[#F5F7FA] mb-1">
+                            {t.hero.videoModal.errorTitle}
+                          </div>
+                          <div className="text-xs text-[#9BAABD] mb-3">
+                            {t.hero.videoModal.errorDesc}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVideoError(false);
+                              handlePlayClick();
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D4AF37] hover:bg-[#F4D36B] text-[#090D14] text-xs font-semibold transition-colors"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>{t.hero.videoModal.retry}</span>
+                          </button>
+                        </div>
+                      ) : notConfiguredNotice ? (
+                        <div className="max-w-md bg-[#090D14]/90 border border-[#D4AF37]/50 p-5 rounded-xl flex flex-col items-center shadow-xl animate-fadeIn">
+                          <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-[#F4D36B] mb-2.5">
+                            <Info className="w-5 h-5" />
+                          </div>
+                          <div className="text-sm font-semibold text-[#F5F7FA] mb-1">
+                            {t.hero.videoModal.notConfiguredTitle}
+                          </div>
+                          <div className="text-xs text-[#9BAABD] leading-relaxed mb-4">
+                            {t.hero.videoModal.notConfiguredDesc}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNotConfiguredNotice(false);
+                                setShowConfigInput(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#131B26] border border-[#D4AF37]/40 hover:border-[#F4D36B] text-[#F4D36B] text-xs font-medium transition-colors"
+                            >
+                              <Settings2 className="w-3.5 h-3.5" />
+                              <span>{t.hero.videoModal.configureUrl}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNotConfiguredNotice(false)}
+                              className="px-3 py-1.5 rounded-lg text-xs text-[#9BAABD] hover:text-[#F5F7FA] transition-colors"
+                            >
+                              {t.hero.videoModal.close}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handlePlayClick}
+                            aria-label={t.hero.videoModal.playButton}
+                            className="w-16 h-16 rounded-full bg-[#090D14]/85 border-2 border-[#D4AF37] hover:border-[#F4D36B] hover:scale-105 active:scale-95 transition-all flex items-center justify-center text-[#F4D36B] mb-3 shadow-xl shadow-black/80 group/play cursor-pointer"
+                          >
+                            <Play className="w-6 h-6 fill-[#F4D36B] ml-1 group-hover/play:scale-110 transition-transform" />
+                          </button>
+                          <div className="text-sm font-semibold text-[#F5F7FA]">
+                            {configuredVideoUrl ? t.hero.videoModal.playButton : t.hero.videoModal.readyForStream}
+                          </div>
+                          <div className="text-xs text-[#9BAABD] max-w-md mt-1">
+                            {configuredVideoUrl 
+                              ? 'Cloudinary stream endpoint verified and ready.' 
+                              : t.hero.videoModal.staticPreviewBadge}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div className="flex justify-end">
+              {/* Status and Optional Stream Configuration Bar */}
+              {showConfigInput ? (
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4 p-3 bg-[#090D14]/85 rounded-xl border border-[rgba(120,170,200,0.18)]">
+                  <input
+                    type="url"
+                    value={tempUrlInput}
+                    onChange={(e) => setTempUrlInput(e.target.value)}
+                    placeholder={t.hero.videoModal.urlPlaceholder}
+                    className="flex-1 px-3 py-2 text-xs bg-[#131B26] border border-[rgba(120,170,200,0.2)] rounded-lg text-[#F5F7FA] placeholder-[#9BAABD]/60 focus:outline-none focus:border-[#D4AF37]"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (tempUrlInput.trim()) {
+                          setConfiguredVideoUrl(tempUrlInput.trim());
+                          setNotConfiguredNotice(false);
+                          setVideoError(false);
+                          setIsPlaying(true);
+                        }
+                      }}
+                      className="px-3 py-2 text-xs font-semibold bg-[#D4AF37] hover:bg-[#F4D36B] text-[#090D14] rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      {t.hero.videoModal.applyUrl}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfiguredVideoUrl('');
+                        setTempUrlInput('');
+                        setIsPlaying(false);
+                        setNotConfiguredNotice(false);
+                        setShowConfigInput(false);
+                      }}
+                      className="px-3 py-2 text-xs text-[#9BAABD] hover:text-white transition-colors"
+                    >
+                      {t.hero.videoModal.clearUrl}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between mb-4 text-[11px] text-[#9BAABD]">
+                  <span className="flex items-center gap-2 font-mono">
+                    <span className={`w-2 h-2 rounded-full ${configuredVideoUrl ? 'bg-[#36D6A0]' : 'bg-[#D4AF37]'}`} />
+                    <span>
+                      {configuredVideoUrl ? 'Video Stream Configured' : t.hero.videoModal.staticPreviewBadge}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempUrlInput(configuredVideoUrl);
+                      setShowConfigInput(true);
+                    }}
+                    className="inline-flex items-center gap-1 text-[#D4AF37] hover:text-[#F4D36B] transition-colors font-medium text-[11px]"
+                  >
+                    <Settings2 className="w-3 h-3" />
+                    <span>{t.hero.videoModal.configureUrl}</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-2 border-t border-[rgba(120,170,200,0.12)]">
                 <button
                   type="button"
-                  onClick={() => setShowVideoModal(false)}
-                  className="px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#090D14] bg-[#D4AF37] rounded-lg hover:bg-[#F4D36B]"
+                  onClick={handleCloseVideoModal}
+                  className="px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#090D14] bg-[#D4AF37] rounded-lg hover:bg-[#F4D36B] transition-colors"
                 >
-                  {currentLang === 'az' ? 'Bağla' : currentLang === 'en' ? 'Close' : 'Закрыть'}
+                  {t.hero.videoModal.close}
                 </button>
               </div>
             </motion.div>
