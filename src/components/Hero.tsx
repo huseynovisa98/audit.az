@@ -12,7 +12,6 @@ import {
   Sparkles,
   AlertCircle,
   Info,
-  Settings2,
   RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -20,6 +19,9 @@ import { Language, ServiceKey } from '../types';
 import { translations } from '../i18n/translations';
 import { ImageWithFallback } from './ImageWithFallback';
 import heroHqImg from '../assets/images/hero_financial_hq_1792445195843.jpg';
+
+const DEFAULT_CLOUDINARY_HERO_VIDEO =
+  'https://res.cloudinary.com/duuymckft/video/upload/v1792447823/boez2hqdzepx261xmooj.mp4';
 
 interface HeroProps {
   currentLang: Language;
@@ -43,14 +45,15 @@ export const Hero: React.FC<HeroProps> = ({
   const t = translations[currentLang];
   const [activeDataPoint, setActiveDataPoint] = useState<number>(3);
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
-  const [configuredVideoUrl, setConfiguredVideoUrl] = useState<string>(
-    videoUrl || (import.meta.env.VITE_CLOUDINARY_VIDEO_URL as string) || ''
+  const [configuredVideoUrl] = useState<string>(
+    (videoUrl || (import.meta.env.VITE_CLOUDINARY_VIDEO_URL as string) || DEFAULT_CLOUDINARY_HERO_VIDEO).trim()
   );
-  const [tempUrlInput, setTempUrlInput] = useState<string>('');
-  const [showConfigInput, setShowConfigInput] = useState<boolean>(false);
+  const [bgVideoLoaded, setBgVideoLoaded] = useState<boolean>(false);
+  const [bgVideoError, setBgVideoError] = useState<boolean>(false);
+  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [videoError, setVideoError] = useState<boolean>(false);
-  const [notConfiguredNotice, setNotConfiguredNotice] = useState<boolean>(false);
+  const [playNoticeActive, setPlayNoticeActive] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const handleCloseVideoModal = () => {
@@ -60,7 +63,7 @@ export const Hero: React.FC<HeroProps> = ({
     }
     setIsPlaying(false);
     setVideoError(false);
-    setNotConfiguredNotice(false);
+    setPlayNoticeActive(false);
     setShowVideoModal(false);
   };
 
@@ -75,14 +78,22 @@ export const Hero: React.FC<HeroProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showVideoModal]);
 
+  // Ensure background video plays automatically on load
+  useEffect(() => {
+    if (bgVideoRef.current) {
+      bgVideoRef.current.play().catch(() => {
+        // Autoplay can be restricted on certain browsers/low-power modes until user interaction
+      });
+    }
+  }, [configuredVideoUrl]);
+
   const handlePlayClick = () => {
-    if (!configuredVideoUrl || !configuredVideoUrl.trim()) {
-      setNotConfiguredNotice(true);
+    if (!configuredVideoUrl) {
+      setPlayNoticeActive(true);
       setIsPlaying(false);
       return;
     }
     setVideoError(false);
-    setNotConfiguredNotice(false);
     setIsPlaying(true);
   };
 
@@ -163,12 +174,51 @@ export const Hero: React.FC<HeroProps> = ({
 
   return (
     <section id="hero" className="relative min-h-[94vh] pt-32 pb-24 flex items-center bg-[#090D14] bg-grid-subtle overflow-hidden">
-      {/* Cinematic Ambient Lighting */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1300px] h-[680px] bg-radial-ambient pointer-events-none" />
-      <div className="absolute top-1/4 -right-48 w-[420px] h-[420px] bg-[#00E5FF]/7 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-10 -left-20 w-[400px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[100px] pointer-events-none" />
+      {/* Full-Width Responsive Cloudinary Hero Background Video & Poster Layer */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* Underlayer Architectural Poster (Immediate display & failure fallback) */}
+        <ImageWithFallback
+          src="/images/hero_financial_hq.jpg"
+          fallbackSrc={heroHqImg}
+          alt="audit.az financial architecture background"
+          className="w-full h-full object-cover scale-105"
+          priority={true}
+          containerClassName="w-full h-full absolute inset-0"
+          fallbackTitle="audit.az Financial Architecture"
+        />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        {/* Cloudinary MP4 Background Video with autoPlay, muted, loop, playsInline & object-cover */}
+        {!bgVideoError && (
+          <video
+            ref={bgVideoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            poster="/images/hero_financial_hq.jpg"
+            onLoadedData={() => setBgVideoLoaded(true)}
+            onError={() => setBgVideoError(true)}
+            className={`w-full h-full object-cover transition-opacity duration-1000 ${
+              bgVideoLoaded ? 'opacity-40 sm:opacity-45' : 'opacity-0'
+            }`}
+          >
+            <source src={configuredVideoUrl} type="video/mp4" />
+          </video>
+        )}
+
+        {/* Deep Matte Navy / Obsidian Gradient Overlays for High-Contrast Editorial Legibility */}
+        <div className="absolute inset-0 bg-[#090D14]/75 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#090D14] via-[#090D14]/90 to-[#090D14]/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#090D14] via-transparent to-[#090D14]/85" />
+      </div>
+
+      {/* Cinematic Ambient Lighting */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1300px] h-[680px] bg-radial-ambient pointer-events-none z-[1]" />
+      <div className="absolute top-1/4 -right-48 w-[420px] h-[420px] bg-[#00E5FF]/7 rounded-full blur-[120px] pointer-events-none z-[1]" />
+      <div className="absolute bottom-10 -left-20 w-[400px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[100px] pointer-events-none z-[1]" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-12 items-center">
           
           {/* Left Column: Editorial & Value Proposition with Motion Stagger */}
@@ -557,7 +607,7 @@ export const Hero: React.FC<HeroProps> = ({
                       fallbackTitle="audit.az Video Infrastructure"
                     />
                     
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent pointer-events-none" />
 
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-10">
                       {videoError ? (
@@ -581,39 +631,30 @@ export const Hero: React.FC<HeroProps> = ({
                             <span>{t.hero.videoModal.retry}</span>
                           </button>
                         </div>
-                      ) : notConfiguredNotice ? (
-                        <div className="max-w-md bg-[#090D14]/90 border border-[#D4AF37]/50 p-5 rounded-xl flex flex-col items-center shadow-xl animate-fadeIn">
-                          <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-[#F4D36B] mb-2.5">
-                            <Info className="w-5 h-5" />
-                          </div>
-                          <div className="text-sm font-semibold text-[#F5F7FA] mb-1">
-                            {t.hero.videoModal.notConfiguredTitle}
-                          </div>
-                          <div className="text-xs text-[#9BAABD] leading-relaxed mb-4">
-                            {t.hero.videoModal.notConfiguredDesc}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNotConfiguredNotice(false);
-                                setShowConfigInput(true);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#131B26] border border-[#D4AF37]/40 hover:border-[#F4D36B] text-[#F4D36B] text-xs font-medium transition-colors"
-                            >
-                              <Settings2 className="w-3.5 h-3.5" />
-                              <span>{t.hero.videoModal.configureUrl}</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setNotConfiguredNotice(false)}
-                              className="px-3 py-1.5 rounded-lg text-xs text-[#9BAABD] hover:text-[#F5F7FA] transition-colors"
-                            >
-                              {t.hero.videoModal.close}
-                            </button>
+                      ) : !configuredVideoUrl ? (
+                        /* When environment variable is missing or empty: static poster image with subtle play button and localized message */
+                        <div className="flex flex-col items-center">
+                          <button
+                            type="button"
+                            onClick={handlePlayClick}
+                            aria-label={t.hero.videoModal.playButton}
+                            className="w-14 h-14 rounded-full bg-[#090D14]/80 border border-[#D4AF37]/50 hover:border-[#D4AF37] hover:bg-[#090D14]/95 text-[#F4D36B]/80 hover:text-[#F4D36B] hover:scale-105 active:scale-95 transition-all flex items-center justify-center mb-3.5 shadow-lg shadow-black/70 group/play cursor-pointer"
+                          >
+                            <Play className="w-5 h-5 fill-[#F4D36B]/80 ml-0.5 group-hover/play:scale-110 transition-transform" />
+                          </button>
+
+                          <div className={`max-w-md px-4 py-3 rounded-xl bg-[#090D14]/90 border ${playNoticeActive ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]/40' : 'border-[rgba(120,170,200,0.2)]'} backdrop-blur-md transition-all shadow-xl`}>
+                            <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-[#F5F7FA] mb-1">
+                              <Info className="w-3.5 h-3.5 text-[#D4AF37]" />
+                              <span>{t.hero.videoModal.notConfiguredTitle}</span>
+                            </div>
+                            <p className="text-[11px] text-[#9BAABD] leading-relaxed">
+                              {t.hero.videoModal.notConfiguredDesc}
+                            </p>
                           </div>
                         </div>
                       ) : (
+                        /* When valid video URL is configured */
                         <>
                           <button
                             type="button"
@@ -624,12 +665,10 @@ export const Hero: React.FC<HeroProps> = ({
                             <Play className="w-6 h-6 fill-[#F4D36B] ml-1 group-hover/play:scale-110 transition-transform" />
                           </button>
                           <div className="text-sm font-semibold text-[#F5F7FA]">
-                            {configuredVideoUrl ? t.hero.videoModal.playButton : t.hero.videoModal.readyForStream}
+                            {t.hero.videoModal.playButton}
                           </div>
                           <div className="text-xs text-[#9BAABD] max-w-md mt-1">
-                            {configuredVideoUrl 
-                              ? 'Cloudinary stream endpoint verified and ready.' 
-                              : t.hero.videoModal.staticPreviewBadge}
+                            {t.hero.videoModal.readyForStream}
                           </div>
                         </>
                       )}
@@ -638,67 +677,18 @@ export const Hero: React.FC<HeroProps> = ({
                 )}
               </div>
 
-              {/* Status and Optional Stream Configuration Bar */}
-              {showConfigInput ? (
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4 p-3 bg-[#090D14]/85 rounded-xl border border-[rgba(120,170,200,0.18)]">
-                  <input
-                    type="url"
-                    value={tempUrlInput}
-                    onChange={(e) => setTempUrlInput(e.target.value)}
-                    placeholder={t.hero.videoModal.urlPlaceholder}
-                    className="flex-1 px-3 py-2 text-xs bg-[#131B26] border border-[rgba(120,170,200,0.2)] rounded-lg text-[#F5F7FA] placeholder-[#9BAABD]/60 focus:outline-none focus:border-[#D4AF37]"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (tempUrlInput.trim()) {
-                          setConfiguredVideoUrl(tempUrlInput.trim());
-                          setNotConfiguredNotice(false);
-                          setVideoError(false);
-                          setIsPlaying(true);
-                        }
-                      }}
-                      className="px-3 py-2 text-xs font-semibold bg-[#D4AF37] hover:bg-[#F4D36B] text-[#090D14] rounded-lg transition-colors whitespace-nowrap"
-                    >
-                      {t.hero.videoModal.applyUrl}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setConfiguredVideoUrl('');
-                        setTempUrlInput('');
-                        setIsPlaying(false);
-                        setNotConfiguredNotice(false);
-                        setShowConfigInput(false);
-                      }}
-                      className="px-3 py-2 text-xs text-[#9BAABD] hover:text-white transition-colors"
-                    >
-                      {t.hero.videoModal.clearUrl}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between mb-4 text-[11px] text-[#9BAABD]">
-                  <span className="flex items-center gap-2 font-mono">
-                    <span className={`w-2 h-2 rounded-full ${configuredVideoUrl ? 'bg-[#36D6A0]' : 'bg-[#D4AF37]'}`} />
-                    <span>
-                      {configuredVideoUrl ? 'Video Stream Configured' : t.hero.videoModal.staticPreviewBadge}
-                    </span>
+              {/* Status and Institutional Information Bar (Non-blocking) */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 text-[11px] text-[#9BAABD]">
+                <span className="flex items-center gap-2 font-mono">
+                  <span className={`w-2 h-2 rounded-full ${configuredVideoUrl ? 'bg-[#36D6A0]' : 'bg-[#D4AF37]'}`} />
+                  <span>
+                    {configuredVideoUrl ? t.hero.videoModal.readyForStream : t.hero.videoModal.staticPreviewBadge}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTempUrlInput(configuredVideoUrl);
-                      setShowConfigInput(true);
-                    }}
-                    className="inline-flex items-center gap-1 text-[#D4AF37] hover:text-[#F4D36B] transition-colors font-medium text-[11px]"
-                  >
-                    <Settings2 className="w-3 h-3" />
-                    <span>{t.hero.videoModal.configureUrl}</span>
-                  </button>
-                </div>
-              )}
+                </span>
+                <span className="text-[11px] text-[#9BAABD]/80">
+                  {t.hero.videoModal.optionalNotice}
+                </span>
+              </div>
 
               <div className="flex justify-end pt-2 border-t border-[rgba(120,170,200,0.12)]">
                 <button
